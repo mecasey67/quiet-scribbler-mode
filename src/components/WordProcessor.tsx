@@ -59,8 +59,13 @@ export const WordProcessor: React.FC<WordProcessorProps> = () => {
   const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
   const charCount = content.length;
 
+  // Apply theme to body element
+  React.useEffect(() => {
+    document.body.className = `${theme === 'white' ? 'theme-white' : theme === 'ecru' ? 'theme-ecru' : 'theme-dark'}`;
+  }, [theme]);
+
   return (
-    <div className={`min-h-screen transition-theme ${theme === 'white' ? 'theme-white' : theme === 'ecru' ? 'theme-ecru' : 'theme-dark'}`}>
+    <div className="min-h-screen transition-theme bg-background text-foreground">
       <div className="relative w-full h-screen flex flex-col">
         {/* Toolbar */}
         {showToolBar && (
