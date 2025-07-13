@@ -48,6 +48,57 @@ export const WordProcessor: React.FC<WordProcessorProps> = () => {
     });
   }, [content, fileName, toast]);
 
+  const handlePrint = useCallback(() => {
+    if (!content.trim()) {
+      toast({
+        title: "Nothing to print",
+        description: "Your document is empty.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create a print-friendly version
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>${fileName}</title>
+            <style>
+              body {
+                font-family: ${fontFamily === 'serif' ? '"Times New Roman", Georgia, serif' : 
+                             fontFamily === 'sans' ? '"Helvetica Neue", Arial, sans-serif' : 
+                             '"Courier New", Courier, monospace'};
+                font-size: 12pt;
+                line-height: 1.6;
+                margin: 1in;
+                color: black;
+                background: white;
+              }
+              @media print {
+                body { margin: 0.5in; }
+              }
+            </style>
+          </head>
+          <body>
+            <pre style="white-space: pre-wrap; font-family: inherit;">${content}</pre>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    }
+
+    toast({
+      title: "Print dialog opened",
+      description: "Your document is ready to print.",
+    });
+  }, [content, fileName, fontFamily, toast]);
+
   const toggleToolBar = useCallback(() => {
     setShowToolBar(prev => !prev);
   }, []);
@@ -77,6 +128,7 @@ export const WordProcessor: React.FC<WordProcessorProps> = () => {
             fileName={fileName}
             setFileName={setFileName}
             onSave={handleSave}
+            onPrint={handlePrint}
             wordCount={wordCount}
             charCount={charCount}
           />
