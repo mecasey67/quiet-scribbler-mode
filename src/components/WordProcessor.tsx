@@ -16,6 +16,7 @@ export const WordProcessor: React.FC<WordProcessorProps> = () => {
   const [fontFamily, setFontFamily] = useState<FontFamily>('serif');
   const [showToolBar, setShowToolBar] = useState(true);
   const [fileName, setFileName] = useState('Untitled');
+  const [fileHandle, setFileHandle] = useState<FileSystemFileHandle | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
@@ -23,7 +24,7 @@ export const WordProcessor: React.FC<WordProcessorProps> = () => {
     setContent(e.target.value);
   }, []);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (!content.trim()) {
       toast({
         title: "Nothing to save",
@@ -33,6 +34,47 @@ export const WordProcessor: React.FC<WordProcessorProps> = () => {
       return;
     }
 
+    // Check if File System Access API is supported
+    if ('showSaveFilePicker' in window) {
+      try {
+        let currentFileHandle = fileHandle;
+        
+        // If no file handle exists, show save picker
+        if (!currentFileHandle) {
+          currentFileHandle = await (window as any).showSaveFilePicker({
+            suggestedName: `${fileName}.txt`,
+            types: [{
+              description: 'Text files',
+              accept: { 'text/plain': ['.txt'] },
+            }],
+          });
+          setFileHandle(currentFileHandle);
+          
+          // Update filename from the selected file
+          const newFileName = currentFileHandle.name.replace(/\.txt$/, '');
+          setFileName(newFileName);
+        }
+
+        // Write to the file
+        const writable = await currentFileHandle.createWritable();
+        await writable.write(content);
+        await writable.close();
+
+        toast({
+          title: "File saved",
+          description: `${currentFileHandle.name} has been saved.`,
+        });
+        return;
+      } catch (error: any) {
+        // User cancelled or error occurred
+        if (error.name !== 'AbortError') {
+          console.error('Error saving file:', error);
+        }
+        // Fall through to legacy download method
+      }
+    }
+
+    // Fallback for browsers without File System Access API
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -44,10 +86,10 @@ export const WordProcessor: React.FC<WordProcessorProps> = () => {
     URL.revokeObjectURL(url);
 
     toast({
-      title: "File saved",
-      description: `${fileName}.txt has been downloaded.`,
+      title: "File downloaded",
+      description: `${fileName}.txt has been downloaded to your Downloads folder.`,
     });
-  }, [content, fileName, toast]);
+  }, [content, fileName, fileHandle, toast]);
 
   const handlePrint = useCallback(() => {
     if (!content.trim()) {
