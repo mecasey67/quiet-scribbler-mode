@@ -273,6 +273,7 @@ export const WordProcessor: React.FC<WordProcessorProps> = () => {
                 text-lg 
                 leading-relaxed
                 transition-theme
+                pr-8
                 ${fontFamily === 'serif' ? 'font-serif' : fontFamily === 'sans' ? 'font-sans' : 'font-mono'}
               `}
               spellCheck={false}
