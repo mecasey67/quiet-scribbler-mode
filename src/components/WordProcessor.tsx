@@ -3,6 +3,7 @@ import { Settings, Download, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { ToolBar } from './ToolBar';
+import { escapeHtml } from '@/lib/utils';
 
 export type Theme = 'white' | 'ecru' | 'dark';
 export type FontFamily = 'serif' | 'sans' | 'mono';
@@ -58,14 +59,19 @@ export const WordProcessor: React.FC<WordProcessorProps> = () => {
       return;
     }
 
-    // Create a print-friendly version
+    // Create a print-friendly version with HTML escaping for security
+    const escapedFileName = escapeHtml(fileName);
+    const escapedContent = escapeHtml(content);
+    
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
           <head>
-            <title>${fileName}</title>
+            <meta charset="UTF-8">
+            <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'none';">
+            <title>${escapedFileName}</title>
             <style>
               body {
                 font-family: ${fontFamily === 'serif' ? '"Times New Roman", Georgia, serif' : 
@@ -83,7 +89,7 @@ export const WordProcessor: React.FC<WordProcessorProps> = () => {
             </style>
           </head>
           <body>
-            <pre style="white-space: pre-wrap; font-family: inherit;">${content}</pre>
+            <pre style="white-space: pre-wrap; font-family: inherit;">${escapedContent}</pre>
           </body>
         </html>
       `);
