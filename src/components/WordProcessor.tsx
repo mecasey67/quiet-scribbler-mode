@@ -91,6 +91,69 @@ export const WordProcessor: React.FC<WordProcessorProps> = () => {
     });
   }, [content, fileName, fileHandle, toast]);
 
+  const handleOpen = useCallback(async () => {
+    // Check if File System Access API is supported
+    if ('showOpenFilePicker' in window) {
+      try {
+        const [fileHandle] = await (window as any).showOpenFilePicker({
+          types: [{
+            description: 'Text files',
+            accept: { 'text/plain': ['.txt'] },
+          }],
+        });
+
+        const file = await fileHandle.getFile();
+        const text = await file.text();
+        
+        setContent(text);
+        setFileHandle(fileHandle);
+        
+        // Update filename from the selected file
+        const newFileName = fileHandle.name.replace(/\.txt$/, '');
+        setFileName(newFileName);
+
+        toast({
+          title: "File opened",
+          description: `${fileHandle.name} has been loaded.`,
+        });
+        return;
+      } catch (error: any) {
+        // User cancelled or error occurred
+        if (error.name !== 'AbortError') {
+          console.error('Error opening file:', error);
+        }
+        return;
+      }
+    }
+
+    // Fallback for browsers without File System Access API
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.txt';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const text = e.target?.result as string;
+          setContent(text);
+          setFileHandle(null); // Can't save back to original file in fallback mode
+          
+          // Update filename from the selected file
+          const newFileName = file.name.replace(/\.txt$/, '');
+          setFileName(newFileName);
+
+          toast({
+            title: "File opened",
+            description: `${file.name} has been loaded.`,
+          });
+        };
+        reader.readAsText(file);
+      }
+    };
+    input.click();
+  }, [setContent, setFileName, setFileHandle, toast]);
+
   const handlePrint = useCallback(() => {
     if (!content.trim()) {
       toast({
@@ -176,6 +239,7 @@ export const WordProcessor: React.FC<WordProcessorProps> = () => {
             fileName={fileName}
             setFileName={setFileName}
             onSave={handleSave}
+            onOpen={handleOpen}
             onPrint={handlePrint}
             wordCount={wordCount}
             charCount={charCount}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, Download, Palette, Type, FileText, Printer } from 'lucide-react';
+import { Settings, Download, Palette, Type, FileText, Printer, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -25,6 +25,7 @@ interface ToolBarProps {
   fileName: string;
   setFileName: (name: string) => void;
   onSave: () => void;
+  onOpen: () => void;
   onPrint: () => void;
   wordCount: number;
   charCount: number;
@@ -38,6 +39,7 @@ export const ToolBar: React.FC<ToolBarProps> = ({
   fileName,
   setFileName,
   onSave,
+  onOpen,
   onPrint,
   wordCount,
   charCount,
@@ -149,6 +151,12 @@ export const ToolBar: React.FC<ToolBarProps> = ({
         </Popover>
 
         <Separator orientation="vertical" className="h-6" />
+
+        {/* Open button */}
+        <Button onClick={onOpen} variant="ghost" size="sm">
+          <FolderOpen size={16} className="mr-1" />
+          Open
+        </Button>
 
         {/* Print button */}
         <Button onClick={onPrint} variant="ghost" size="sm">
